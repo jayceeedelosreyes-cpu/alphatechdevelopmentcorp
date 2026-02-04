@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Personal Data Sheet</title>
+<style>
+body { font-family: Arial; background:#333; color:#fff; padding:20px; }
+h1,h2,h3 { text-align:center; margin:5px 0; }
+h1{font-size:24px;font-weight:bold}
+h2{font-size:16px;font-weight:normal}
+h3{font-size:24px;font-weight:bold}
+.form-wrapper{background:#fff;color:#000;padding:15mm}
+table{width:100%;border-collapse:collapse;margin-bottom:6px}
+td,th{border:1px solid #000;padding:4px;vertical-align:top;font-size:11px}
+.section-title{background:#555;color:#fff;font-weight:bold}
+input,textarea,select{border:none;width:100%;font-size:11px;outline:none;background:transparent}
+textarea{resize:none}
+#submit-btn{display:block;margin:10px auto;padding:8px 15px;background:#555;color:#fff;border:none;cursor:pointer}
+button.admin-page{display:block;margin:10px auto;padding:8px 15px;background:#222;color:#fff;border:none;cursor:pointer}
+</style>
+</head>
+<body>
+
+<h1>ALPHATECH DEVELOPMENT CORPORATION</h1>
+<h2>HUMAN RESOURCE UNIT</h2>
+<h3>PERSONAL DATA SHEET</h3>
+
+<div class="form-wrapper">
+<form method="POST" action="save_pds.php">
+
+<input type="hidden" name="form_type" value="pds_submissions">
+
+<table>
+<tr>
+<td colspan="4">Last Name</td><td colspan="4">First Name</td>
+<td colspan="4">Middle Name</td><td colspan="4">Maiden Name</td>
+</tr>
+<tr>
+<td colspan="4"><input name="last_name" required></td>
+<td colspan="4"><input name="first_name" required></td>
+<td colspan="4"><input name="middle_name"></td>
+<td colspan="4"><input name="maiden_name"></td>
+</tr>
+
+<tr>
+<td colspan="12">Present Address</td><td colspan="4">Telephone No.</td>
+</tr>
+<tr>
+<td colspan="12"><input name="present_address"></td>
+<td colspan="4"><input name="telephone"></td>
+</tr>
+
+<tr>
+<td colspan="12">Permanent / Provincial Address</td><td colspan="4">Cellphone No.</td>
+</tr>
+<tr>
+<td colspan="12"><input name="permanent_address"></td>
+<td colspan="4"><input name="cellphone"></td>
+</tr>
+
+<tr>
+<td>Age</td><td>Height</td><td>Weight</td>
+<td colspan="3">Birthdate</td><td colspan="3">Birthplace</td>
+<td colspan="2">Sex</td><td colspan="2">Civil Status</td><td colspan="2">Citizenship</td>
+</tr>
+<tr>
+<td><input type="number" name="age"></td>
+<td><input name="height"></td>
+<td><input name="weight"></td>
+<td colspan="3"><input type="date" name="birthdate"></td>
+<td colspan="3"><input name="birthplace"></td>
+<td colspan="2">
+<select name="sex"><option></option><option>Male</option><option>Female</option></select>
+</td>
+<td colspan="2">
+<select name="civil_status"><option></option><option>Single</option><option>Married</option><option>Widowed</option></select>
+</td>
+<td colspan="2"><input name="citizenship"></td>
+</tr>
+
+<tr>
+<td colspan="4">Religion</td><td colspan="12">Email Address</td>
+</tr>
+<tr>
+<td colspan="4"><input name="religion"></td>
+<td colspan="12"><input type="email" name="email"></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td>SSS No.</td><td>TIN</td><td>PhilHealth</td><td>Pag-IBIG</td>
+</tr>
+<tr>
+<td><input name="sss_no"></td>
+<td><input name="tin"></td>
+<td><input name="philhealth"></td>
+<td><input name="pagibig"></td>
+</tr>
+
+<tr><td colspan="2">Father's Name</td><td colspan="2">Occupation</td></tr>
+<tr><td colspan="2"><input name="father_name"></td><td colspan="2"><input name="father_occupation"></td></tr>
+
+<tr><td colspan="2">Mother's Name</td><td colspan="2">Occupation</td></tr>
+<tr><td colspan="2"><input name="mother_name"></td><td colspan="2"><input name="mother_occupation"></td></tr>
+
+<tr><td colspan="2">Spouse Name</td><td colspan="2">Occupation</td></tr>
+<tr><td colspan="2"><input name="spouse_name"></td><td colspan="2"><input name="spouse_occupation"></td></tr>
+</table>
+
+<table>
+<tr class="section-title"><td colspan="4">EDUCATIONAL ATTAINMENT</td></tr>
+<tr><td>Level</td><td>School</td><td>Inclusive Dates</td><td>Honors</td></tr>
+<tr><td>Elementary</td><td><input name="elementary_school"></td><td><input name="elementary_dates"></td><td><input name="elementary_honors"></td></tr>
+<tr><td>Secondary</td><td><input name="secondary_school"></td><td><input name="secondary_dates"></td><td><input name="secondary_honors"></td></tr>
+<tr><td>Tertiary</td><td><input name="tertiary_school"></td><td><input name="tertiary_dates"></td><td><input name="tertiary_honors"></td></tr>
+</table>
+
+<table>
+<tr class="section-title"><td colspan="5">WORK EXPERIENCE</td></tr>
+<tr><td>Employer</td><td>Position</td><td>Inclusive Dates</td><td>Salary</td><td>Reason for Leaving</td></tr>
+<tr><td><input name="employer1"></td><td><input name="position1"></td><td><input name="dates1"></td><td><input name="salary1"></td><td><input name="reason1"></td></tr>
+<tr><td><input name="employer2"></td><td><input name="position2"></td><td><input name="dates2"></td><td><input name="salary2"></td><td><input name="reason2"></td></tr>
+</table>
+
+<h2>ADDITIONAL & MEDICAL INFORMATION</h2>
+
+<table>
+<tr class="section-title"><td colspan="4">HEALTH QUESTIONS</td></tr>
+<tr><td colspan="4">
+<input type="radio" name="special_condition" value="Yes" required> Yes
+<input type="radio" name="special_condition" value="No"> No
+</td></tr>
+<tr><td colspan="4"><textarea name="special_condition_details"></textarea></td></tr>
+
+<tr><td colspan="4">
+<input type="radio" name="past_illness" value="Yes" required> Yes
+<input type="radio" name="past_illness" value="No"> No
+</td></tr>
+<tr><td colspan="4"><textarea name="past_illness_details"></textarea></td></tr>
+</table>
+
+<table>
+<tr class="section-title"><td colspan="4">MEDICAL CONDITIONS</td></tr>
+<tr>
+<td><input type="checkbox" name="allergic" value="Yes"> Allergic disorders</td>
+<td><input type="checkbox" name="cardio" value="Yes"> Cardiovascular</td>
+<td><input type="checkbox" name="pulmonary" value="Yes"> Pulmonary</td>
+<td><input type="checkbox" name="gastro" value="Yes"> Gastrointestinal</td>
+</tr>
+<tr>
+<td><input type="checkbox" name="musculo" value="Yes"> Musculoskeletal</td>
+<td><input type="checkbox" name="vision" value="Yes"> Vision</td>
+<td colspan="2"><input type="checkbox" name="none" value="Yes"> None</td>
+</tr>
+<tr><td colspan="4"><textarea name="medical_details"></textarea></td></tr>
+</table>
+
+<table>
+<tr><td>Date</td><td>Signature</td></tr>
+<tr><td><input type="date" name="date"></td><td><input name="signature"></td></tr>
+</table>
+
+<button id="submit-btn" type="submit">Submit PDS</button>
+</form>
+
+<button class="admin-page" onclick="location.href='admin_login.html'">Admin Page</button>
+</div>
+
+</body>
+</html>

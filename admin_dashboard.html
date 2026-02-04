@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Dashboard - PDS</title>
+<style>
+body { font-family: Arial; background:#333; color:#fff; padding:20px; }
+h1,h2,h3 { text-align:center; margin:5px 0; }
+h1{font-size:28px;font-weight:bold} /* slightly larger */
+h2{font-size:20px;font-weight:normal}
+h3{font-size:26px;font-weight:bold} /* slightly larger */
+
+.form-wrapper{background:#fff;color:#000;padding:15mm}
+table{width:100%;border-collapse:collapse;margin-bottom:6px}
+td,th{border:1px solid #000;padding:6px;vertical-align:top;font-size:14px} /* increased font size */
+.section-title{background:#555;color:#fff;font-weight:bold}
+input,textarea,select{border:none;width:100%;font-size:14px;outline:none;background:transparent}
+textarea{resize:none}
+
+button{
+  padding:8px 12px;
+  margin:5px 0;
+  cursor:pointer;
+}
+
+#pds-container{margin-top:20px;}
+
+#applicantSelect {
+  width: 300px;
+  padding: 6px 8px;
+  font-size: 14px;
+  color: #000;
+  background-color: #fff;
+  border: 1px solid #555;
+  border-radius: 4px;
+  appearance: none;
+}
+
+#logoutBtn {
+  background: #c00;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+</style>
+
+<!-- SheetJS for Excel export -->
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<!-- html2canvas and jsPDF for PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<h1>ALPHATECH DEVELOPMENT CORPORATION</h1>
+<h2>HUMAN RESOURCE UNIT</h2>
+<h3>ADMIN DASHBOARD - PERSONAL DATA SHEETS</h3>
+
+<div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:10px;">
+  <div>
+    <label for="applicantSelect">Select Applicant:</label>
+    <select id="applicantSelect">
+      <option value="">-- Choose Applicant --</option>
+    </select>
+    
+    <button onclick="downloadSelectedPDS()">Download PDF</button>
+    <button onclick="exportAllToExcel()">Export All to Excel</button>
+    <button onclick="downloadWord()">Download Word</button>
+  </div>
+  <div>
+      <button onclick="openChangePassword()">Change Password</button>
+      <button id="logoutBtn" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div id="pds-container"></div>
+
+<script>
+  function openChangePassword(){
+  document.getElementById('changePasswordModal').style.display = 'flex';
+}
+
+function closeChangePassword(){
+  document.getElementById('changePasswordModal').style.display = 'none';
+}
+
+function submitChangePassword(){
+  const current = document.getElementById('currentPwd').value;
+  const newPwd = document.getElementById('newPwd').value;
+  const confirmPwd = document.getElementById('confirmPwd').value;
+
+  if(!current || !newPwd || !confirmPwd){
+    alert('All fields are required');
+    return;
+  }
+
+  if(newPwd !== confirmPwd){
+    alert('Passwords do not match');
+    return;
+  }
+
+  fetch('admin_change_password.php',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      current_password: current,
+      new_password: newPwd
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if(data.success){
+      alert('Password changed successfully');
+      closeChangePassword();
+      document.getElementById('currentPwd').value='';
+      document.getElementById('newPwd').value='';
+      document.getElementById('confirmPwd').value='';
+    }else{
+      alert(data.message);
+    }
+  })
+  .catch(()=>alert('Error changing password'));
+}
+
+const select = document.getElementById('applicantSelect');
+const container = document.getElementById('pds-container');
+let submissions = [];
+
+// Fetch submissions from the database
+fetch('get_submissions.php')
+.then(res => res.json())
+.then(data => {
+    submissions = data;
+    submissions.forEach((sub, idx) => {
+        const option = document.createElement('option');
+        option.value = idx;
+        option.text = `${sub.last_name}, ${sub.first_name} - ${sub.submission_date}`;
+        select.appendChild(option);
+    });
+});
+
+select.addEventListener('change', function(){
+    const idx = this.value;
+    container.innerHTML = '';
+    if(idx === '') return;
+
+    const sub = submissions[idx];
+    const div = document.createElement('div');
+    div.id = 'pds';
+    div.classList.add('form-wrapper');
+
+    div.innerHTML = elementHTML(sub); // build the PDS content
+    container.appendChild(div);
+});
+
+// Build PDS HTML dynamically
+function elementHTML(sub){
+    return `
+<h1 style="text-align:center;">ALPHATECH DEVELOPMENT CORPORATION</h1>
+<h2 style="text-align:center;">HUMAN RESOURCE UNIT</h2>
+<h3 style="text-align:center;">PERSONAL DATA SHEET</h3>
+
+<table>
+<tr>
+<td colspan="4">Last Name</td><td colspan="4">First Name</td><td colspan="4">Middle Name</td><td colspan="4">Maiden Name</td>
+</tr>
+<tr>
+<td colspan="4">${sub.last_name || ''}</td>
+<td colspan="4">${sub.first_name || ''}</td>
+<td colspan="4">${sub.middle_name || ''}</td>
+<td colspan="4">${sub.maiden_name || ''}</td>
+</tr>
+
+<tr>
+<td colspan="12">Present Address</td><td colspan="4">Telephone No.</td>
+</tr>
+<tr>
+<td colspan="12">${sub.present_address || ''}</td><td colspan="4">${sub.telephone || ''}</td>
+</tr>
+
+<tr>
+<td colspan="12">Permanent / Provincial Address</td><td colspan="4">Cellphone No.</td>
+</tr>
+<tr>
+<td colspan="12">${sub.permanent_address || ''}</td><td colspan="4">${sub.cellphone || ''}</td>
+</tr>
+
+<tr>
+<td>Age</td><td>Height</td><td>Weight</td><td colspan="3">Birthdate</td>
+<td colspan="3">Birthplace</td><td colspan="2">Sex</td><td colspan="2">Civil Status</td><td colspan="2">Citizenship</td>
+</tr>
+<tr>
+<td>${sub.age || ''}</td><td>${sub.height || ''}</td><td>${sub.weight || ''}</td>
+<td colspan="3">${sub.birthdate || ''}</td>
+<td colspan="3">${sub.birthplace || ''}</td>
+<td colspan="2">${sub.sex || ''}</td>
+<td colspan="2">${sub.civil_status || ''}</td>
+<td colspan="2">${sub.citizenship || ''}</td>
+</tr>
+
+<tr><td colspan="4">Religion</td><td colspan="12">Email Address</td></tr>
+<tr><td colspan="4">${sub.religion || ''}</td><td colspan="12">${sub.email || ''}</td></tr>
+
+<table>
+<tr><td>SSS No.</td><td>TIN</td><td>PhilHealth</td><td>Pag-IBIG</td></tr>
+<tr><td>${sub.sss_no || ''}</td><td>${sub.tin || ''}</td><td>${sub.philhealth || ''}</td><td>${sub.pagibig || ''}</td></tr>
+
+<tr><td colspan="2">Father's Name</td><td colspan="2">Occupation</td></tr>
+<tr><td colspan="2">${sub.father_name || ''}</td><td colspan="2">${sub.father_occupation || ''}</td></tr>
+
+<tr><td colspan="2">Mother's Name</td><td colspan="2">Occupation</td></tr>
+<tr><td colspan="2">${sub.mother_name || ''}</td><td colspan="2">${sub.mother_occupation || ''}</td></tr>
+
+<tr><td colspan="2">Spouse Name</td><td colspan="2">Occupation</td></tr>
+<tr><td colspan="2">${sub.spouse_name || ''}</td><td colspan="2">${sub.spouse_occupation || ''}</td></tr>
+</table>
+
+<table>
+<tr class="section-title"><td colspan="4">EDUCATIONAL ATTAINMENT</td></tr>
+<tr><td>Level</td><td>School</td><td>Inclusive Dates</td><td>Honors</td></tr>
+<tr><td>Elementary</td><td>${sub.elementary_school || ''}</td><td>${sub.elementary_dates || ''}</td><td>${sub.elementary_honors || ''}</td></tr>
+<tr><td>Secondary</td><td>${sub.secondary_school || ''}</td><td>${sub.secondary_dates || ''}</td><td>${sub.secondary_honors || ''}</td></tr>
+<tr><td>Tertiary</td><td>${sub.tertiary_school || ''}</td><td>${sub.tertiary_dates || ''}</td><td>${sub.tertiary_honors || ''}</td></tr>
+</table>
+
+<table>
+<tr class="section-title"><td colspan="5">WORK EXPERIENCE</td></tr>
+<tr><td>Employer</td><td>Position</td><td>Inclusive Dates</td><td>Salary</td><td>Reason for Leaving</td></tr>
+<tr><td>${sub.employer1 || ''}</td><td>${sub.position1 || ''}</td><td>${sub.dates1 || ''}</td><td>${sub.salary1 || ''}</td><td>${sub.reason1 || ''}</td></tr>
+<tr><td>${sub.employer2 || ''}</td><td>${sub.position2 || ''}</td><td>${sub.dates2 || ''}</td><td>${sub.salary2 || ''}</td><td>${sub.reason2 || ''}</td></tr>
+</table>
+
+<h2>ADDITIONAL & MEDICAL INFORMATION</h2>
+<table>
+<tr class="section-title"><td colspan="4">HEALTH QUESTIONS</td></tr>
+<tr><td colspan="4">
+<strong>Do you have any present or past medical condition that may require special consideration for job assignment?</strong><br>
+${sub.special_condition || ''}<br>
+Details: ${sub.special_condition_details || ''}
+</td></tr>
+
+<tr><td colspan="4">
+<strong>Have you had any illness, hospitalization, or accident in the past two (2) years?</strong><br>
+${sub.past_illness || ''}<br>
+Details: ${sub.past_illness_details || ''}
+</td></tr>
+</table>
+
+<table>
+<tr class="section-title"><td colspan="4">MEDICAL CONDITIONS</td></tr>
+<tr><td colspan="4">Allergic disorders: ${sub.allergic ? 'Yes' : 'No'}</td></tr>
+<tr><td colspan="4">Cardiovascular conditions: ${sub.cardio ? 'Yes' : 'No'}</td></tr>
+<tr><td colspan="4">Pulmonary conditions: ${sub.pulmonary ? 'Yes' : 'No'}</td></tr>
+<tr><td colspan="4">Gastrointestinal problems: ${sub.gastro ? 'Yes' : 'No'}</td></tr>
+<tr><td colspan="4">Musculoskeletal conditions: ${sub.musculo ? 'Yes' : 'No'}</td></tr>
+<tr><td colspan="4">Vision problems: ${sub.vision ? 'Yes' : 'No'}</td></tr>
+<tr><td colspan="4">None: ${sub.none_condition ? 'Yes' : 'No'}</td></tr>
+<tr><td colspan="4">Other details: ${sub.medical_details || ''}</td></tr>
+</table>
+
+<table>
+<tr><td>Date</td><td>Signature</td></tr>
+<tr><td>${sub.submission_date || ''}</td><td>${sub.signature || ''}</td></tr>
+</table>
+`;
+}
+
+// PDF Export
+function downloadSelectedPDS(){
+    const idx = select.value;
+    if(idx === '') { alert("Please select an applicant."); return; }
+
+    const element = document.getElementById('pds');
+    if(!element) return;
+
+    const buttons = element.querySelectorAll('button, select');
+    buttons.forEach(btn => btn.style.display = 'none');
+
+    html2canvas(element, {scale:2}).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'pt', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`PDS_${submissions[idx].last_name}_${submissions[idx].first_name}.pdf`);
+
+        buttons.forEach(btn => btn.style.display = 'block');
+    });
+}
+
+// Enhanced Excel Export with Title like PDF
+function exportAllToExcel() {
+    if(submissions.length === 0){
+        alert("No submissions to export!");
+        return;
+    }
+
+    const exportData = submissions.map(sub => ({
+        "Last Name": sub.last_name || "",
+        "First Name": sub.first_name || "",
+        "Middle Name": sub.middle_name || "",
+        "Maiden Name": sub.maiden_name || "",
+        "Present Address": sub.present_address || "",
+        "Telephone": sub.telephone || "",
+        "Permanent Address": sub.permanent_address || "",
+        "Cellphone": sub.cellphone || "",
+        "Age": sub.age || "",
+        "Height": sub.height || "",
+        "Weight": sub.weight || "",
+        "Birthdate": sub.birthdate || "",
+        "Birthplace": sub.birthplace || "",
+        "Sex": sub.sex || "",
+        "Civil Status": sub.civil_status || "",
+        "Citizenship": sub.citizenship || "",
+        "Religion": sub.religion || "",
+        "Email": sub.email || "",
+        "SSS No.": sub.sss_no || "",
+        "TIN": sub.tin || "",
+        "PhilHealth": sub.philhealth || "",
+        "Pag-IBIG": sub.pagibig || "",
+        "Father's Name": sub.father_name || "",
+        "Father's Occupation": sub.father_occupation || "",
+        "Mother's Name": sub.mother_name || "",
+        "Mother's Occupation": sub.mother_occupation || "",
+        "Spouse Name": sub.spouse_name || "",
+        "Spouse Occupation": sub.spouse_occupation || "",
+        "Elementary School": sub.elementary_school || "",
+        "Elementary Dates": sub.elementary_dates || "",
+        "Elementary Honors": sub.elementary_honors || "",
+        "Secondary School": sub.secondary_school || "",
+        "Secondary Dates": sub.secondary_dates || "",
+        "Secondary Honors": sub.secondary_honors || "",
+        "Tertiary School": sub.tertiary_school || "",
+        "Tertiary Dates": sub.tertiary_dates || "",
+        "Tertiary Honors": sub.tertiary_honors || "",
+        "Employer 1": sub.employer1 || "",
+        "Position 1": sub.position1 || "",
+        "Dates 1": sub.dates1 || "",
+        "Salary 1": sub.salary1 || "",
+        "Reason 1": sub.reason1 || "",
+        "Employer 2": sub.employer2 || "",
+        "Position 2": sub.position2 || "",
+        "Dates 2": sub.dates2 || "",
+        "Salary 2": sub.salary2 || "",
+        "Reason 2": sub.reason2 || "",
+        "Special Condition": sub.special_condition || "",
+        "Special Condition Details": sub.special_condition_details || "",
+        "Past Illness": sub.past_illness || "",
+        "Past Illness Details": sub.past_illness_details || "",
+        "Allergic Disorders": sub.allergic ? "Yes" : "No",
+        "Cardiovascular": sub.cardio ? "Yes" : "No",
+        "Pulmonary": sub.pulmonary ? "Yes" : "No",
+        "Gastrointestinal": sub.gastro ? "Yes" : "No",
+        "Musculoskeletal": sub.musculo ? "Yes" : "No",
+        "Vision": sub.vision ? "Yes" : "No",
+        "None Condition": sub.none_condition ? "Yes" : "No",
+        "Medical Details": sub.medical_details || "",
+        "Submission Date": sub.submission_date || "",
+        "Signature": sub.signature || ""
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData, {origin: 4}); // start at row 5
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "All Submissions");
+
+    // Merge first 3 rows for the title
+    const totalColumns = Object.keys(exportData[0]).length;
+    worksheet['!merges'] = [
+        {s:{r:0,c:0}, e:{r:0,c:totalColumns-1}},
+        {s:{r:1,c:0}, e:{r:1,c:totalColumns-1}},
+        {s:{r:2,c:0}, e:{r:2,c:totalColumns-1}}
+    ];
+
+    // Add title values
+    worksheet['A1'] = {v:"ALPHATECH DEVELOPMENT CORPORATION", t:"s", s:{font:{bold:true, sz:16}, alignment:{horizontal:"center"}}};
+    worksheet['A2'] = {v:"HUMAN RESOURCE UNIT", t:"s", s:{font:{bold:true, sz:14}, alignment:{horizontal:"center"}}};
+    worksheet['A3'] = {v:"PERSONAL DATA SHEET", t:"s", s:{font:{bold:true, sz:14}, alignment:{horizontal:"center"}}};
+
+    // Style headers
+    const range = XLSX.utils.decode_range(worksheet['!ref']);
+    for(let C = range.s.c; C <= range.e.c; ++C){
+        const address = XLSX.utils.encode_cell({r:4, c:C}); // header row at row 5
+        if(!worksheet[address]) continue;
+        worksheet[address].s = {
+            font: { bold:true, sz:12, color:{rgb:"FFFFFF"} },
+            fill: { fgColor:{rgb:"555555"} },
+            alignment: { horizontal:"center", vertical:"center" },
+            border: {
+                top:{style:"thin", color:{rgb:"000000"}},
+                bottom:{style:"thin", color:{rgb:"000000"}},
+                left:{style:"thin", color:{rgb:"000000"}},
+                right:{style:"thin", color:{rgb:"000000"}}
+            }
+        };
+    }
+
+    // Style data rows with borders & alternating colors
+    for(let R = 5; R <= range.e.r; ++R){
+        for(let C = range.s.c; C <= range.e.c; ++C){
+            const address = XLSX.utils.encode_cell({r:R, c:C});
+            if(!worksheet[address]) worksheet[address] = {v:""};
+            worksheet[address].s = {
+                font: { sz:11 },
+                fill: { fgColor:{rgb: (R%2===0)?"FFFFFF":"F2F2F2"} },
+                alignment: { vertical:"top", wrapText:true },
+                border: {
+                    top:{style:"thin", color:{rgb:"000000"}},
+                    bottom:{style:"thin", color:{rgb:"000000"}},
+                    left:{style:"thin", color:{rgb:"000000"}},
+                    right:{style:"thin", color:{rgb:"000000"}}
+                }
+            };
+        }
+    }
+
+    // Set column widths
+    const wscols = [];
+    for(let C = range.s.c; C <= range.e.c; ++C){
+        wscols.push({wch:25});
+    }
+    worksheet['!cols'] = wscols;
+
+    XLSX.writeFile(workbook, "All_PDS_Submissions.xlsx");
+}
+
+// Word Export
+function downloadWord() {
+    const idx = select.value;
+    if(idx === '') { alert("Please select an applicant."); return; }
+    const sub = submissions[idx];
+    const element = document.getElementById('pds');
+    if(!element) return;
+
+    const style = `
+<style>
+body { font-family: Arial; color:#000; }
+h1{font-size:28px;font-weight:bold;text-align:center;}
+h2{font-size:20px;font-weight:normal;text-align:center;}
+h3{font-size:26px;font-weight:bold;text-align:center;}
+table{width:100%;border-collapse:collapse;margin-bottom:6px;}
+td,th{border:1px solid #000;padding:6px;vertical-align:top;font-size:14px;}
+.section-title{background:#555;color:#fff;font-weight:bold;}
+</style>
+`;
+
+    const htmlContent = `<html><head><meta charset="utf-8">${style}</head><body>${element.outerHTML}</body></html>`;
+    const blob = new Blob([htmlContent], {type: 'application/msword'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `PDS_${sub.last_name}_${sub.first_name}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+function logout() {
+    window.location.href = 'admin_login.html';
+}
+
+</script>
+<!-- CHANGE PASSWORD MODAL -->
+<div id="changePasswordModal" style="
+display:none;
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.6);
+justify-content:center;
+align-items:center;
+z-index:9999;
+">
+  <div style="
+  background:#fff;
+  color:#000;
+  padding:20px;
+  width:320px;
+  border-radius:6px;
+  ">
+    <h3 style="text-align:center;">Change Password</h3>
+
+    <label>Current Password</label>
+    <div style="position:relative; margin-bottom:8px;">
+      <input type="password" id="currentPwd" style="width:100%;">
+      <span class="toggle-pass" data-target="currentPwd" style="
+        position:absolute;
+        right:8px;
+        top:50%;
+        transform:translateY(-50%);
+        cursor:pointer;
+        user-select:none;">👁️</span>
+    </div>
+
+    <label>New Password</label>
+    <div style="position:relative; margin-bottom:8px;">
+      <input type="password" id="newPwd" style="width:100%;">
+      <span class="toggle-pass" data-target="newPwd" style="
+        position:absolute;
+        right:8px;
+        top:50%;
+        transform:translateY(-50%);
+        cursor:pointer;
+        user-select:none;">👁️</span>
+    </div>
+
+    <label>Confirm Password</label>
+    <div style="position:relative; margin-bottom:10px;">
+      <input type="password" id="confirmPwd" style="width:100%;">
+      <span class="toggle-pass" data-target="confirmPwd" style="
+        position:absolute;
+        right:8px;
+        top:50%;
+        transform:translateY(-50%);
+        cursor:pointer;
+        user-select:none;">👁️</span>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;">
+      <button onclick="submitChangePassword()">Submit</button>
+      <button onclick="closeChangePassword()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Toggle password visibility
+  const toggles = document.querySelectorAll('.toggle-pass');
+  toggles.forEach(toggle => {
+    toggle.addEventListener('click', () => {
+      const targetId = toggle.getAttribute('data-target');
+      const input = document.getElementById(targetId);
+      if(input.type === 'password'){
+        input.type = 'text';
+        toggle.textContent = '🙈';
+      } else {
+        input.type = 'password';
+        toggle.textContent = '👁️';
+      }
+    });
+  });
+</script>
+
+
+</body>
+</html>
