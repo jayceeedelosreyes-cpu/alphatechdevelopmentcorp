@@ -4,7 +4,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Database connection
-$conn = new mysqli("sql112.infinityfree.com", "root", "", "pds_system");
+$conn = new mysqli("sql112.infinityfree.com", "if0_41058020", "", "alphatech2026");
 if ($conn->connect_error) {
     die("Database error: " . $conn->connect_error);
 }
