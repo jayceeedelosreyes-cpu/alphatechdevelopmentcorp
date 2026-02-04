@@ -1,5 +1,5 @@
 <?php
-$servername = "localhost";
+$servername = "sql112.infinityfree.com";
 $username = "root";
 $password = "";
 $database = "pds_system";
@@ -10,3 +10,4 @@ if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 ?>
+
