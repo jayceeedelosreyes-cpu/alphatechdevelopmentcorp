@@ -4,7 +4,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Database connection
-$conn = new mysqli("localhost", "root", "", "pds_system");
+$conn = new mysqli("sql112.infinityfree.com", "root", "", "pds_system");
 if ($conn->connect_error) {
     die("Database error: " . $conn->connect_error);
 }
